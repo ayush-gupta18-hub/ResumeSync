@@ -16,9 +16,11 @@ const verifyToken = require("./middleware/auth");
 const app = express();
 
  app.use(cors({
-  origin: "*",
-  methods: "GET,POST,PUT,DELETE,OPTIONS",
-  allowedHeaders: "Content-Type, Authorization"
+  origin: [
+    "http://localhost:5500",
+    "https://resume-sync-alpha.vercel.app"
+  ],
+  credentials: true
 }));
 
 app.use(express.json({ limit: "5mb" }));
