@@ -8,9 +8,9 @@ and matches resumes against job descriptions using the Gemini AI API.
 
 
 
-\## 🚀 Features
+\##  Features
 
-\- 🔐 Login \& Signup (JWT + MongoDB)
+\-  Login \& Signup (JWT + MongoDB)
 
 \-  Resume Upload \& AI Analysis
 
