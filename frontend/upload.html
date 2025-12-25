@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Upload Resume</title>
+</head>
+<body>
+
+  <h2>Upload Resume File</h2>
+
+  <input type="file" id="resumeFile" />
+  <br><br>
+
+  <button onclick="uploadResume()">Upload</button>
+
+  <pre id="output"></pre>
+
+  <script>
+    async function uploadResume() {
+      const fileInput = document.getElementById("resumeFile");
+      const file = fileInput.files[0];
+
+      if (!file) {
+        alert("Please select a file");
+        return;
+      }
+
+      const formData = new FormData();
+      formData.append("resume", file);
+
+      const response = await fetch("http://localhost:5000/upload", {
+        method: "POST",
+        body: formData,
+      });
+
+      const data = await response.json();
+      document.getElementById("output").innerText =
+        JSON.stringify(data, null, 2);
+    }
+  </script>
+
+</body>
+</html>

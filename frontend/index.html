@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>AI Resume Assistant</title>
+<style>
+  body {
+    font-family: "Segoe UI", sans-serif;
+   background: linear-gradient(135deg, #0f2027, #203a43, #2c5364);
+
+    min-height: 100vh;
+    padding: 40px;
+    margin: 0;
+  }
+
+  .container {
+    max-width: 800px;
+    margin: auto;
+    background: #ffffff;
+    padding: 30px 35px;
+    border-radius: 12px;
+    box-shadow: 0 15px 40px rgba(0, 0, 0, 0.2);
+   position: relative;
+   z-index: 1;
+  }
+
+  h1 {
+    text-align: center;
+    margin-bottom: 10px;
+    color: #333;
+  }
+
+  p.subtitle {
+    text-align: center;
+    color: #666;
+    margin-bottom: 25px;
+  }
+
+  input[type="file"] {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+  }
+
+ button {
+  width: 100%;
+  margin-top: 20px;
+  padding: 12px;
+  font-size: 16px;
+  background: white;
+  color: #2c5364;
+  border: 2px solid #2c5364;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 600;
+  transition: all 0.3s ease;
+}
+
+button:hover {
+  background: #2c5364;
+  color: white;
+}
+
+ <button onclick="downloadPDF()">Download Analysis as PDF</button>
+
+ 
+.loading::after {
+  content: "";
+  display: inline-block;
+  animation: dots 1.5s steps(4, end) infinite;
+}
+
+@keyframes dots {
+  0% { content: ""; }
+  25% { content: "."; }
+  50% { content: ".."; }
+  75% { content: "..."; }
+}
+ 
+.analysis-output {
+  font-family: "Georgia", "Times New Roman", serif;
+  font-size: 15.5px;
+  background: #0b1c26;        /* dark card */
+  color: #e0e6eb;             /* light text */
+  padding: 22px;
+  border-radius: 8px;
+  margin-top: 25px;
+  border-left: 5px solid #4da8da;
+  line-height: 1.7;
+  white-space: pre-wrap;
+}
+ .analysis-output h3 {
+  color: #2c5364;
+  margin-top: 20px;
+}
+
+ .loading-dots::after {
+  content: "...";
+  animation: dots 1.5s steps(4, end) infinite;
+}
+
+@keyframes dots {
+  0%, 20% { content: "."; }
+  40% { content: ".."; }
+  60% { content: "..."; }
+  80%, 100% { content: ""; }
+}
+
+
+
+pre {
+    background: #f4f6f8;
+    padding: 20px;
+    margin-top: 25px;
+    border-radius: 8px;
+    white-space: pre-wrap;
+    line-height: 1.6;
+    color: #333;
+    max-height: 400px;
+    overflow-y: auto;
+  }
+
+</style>
+
+</head>
+
+<body>
+   
+  <div class="container">
+  <h1>ResumeSync</h1>
+  <p class="subtitle">
+    AI-Powered Resume Analysis & Job Match Assistant
+  </p>
+
+   
+  <input type="file" id="resumeFile" accept="*/*" />
+    <br />
+    <button type="button" onclick="uploadResume()">Analyze Resume</button>
+
+  <h3 style="margin-top:20px;color:#4da8da;">Job Description</h3>
+
+ <textarea
+  id="jobDesc"
+  placeholder="Paste job description here"
+  style="width:100%;height:120px;"
+   ></textarea>
+
+<button type="button" onclick="matchJD()">Match Resume with Job</button> 
+<pre id="jdOutput" class="analysis-output"></pre>
+<div id="jdLoading" style="display:none; color:#4da8da; margin-top:8px; font-style:italic;">
+  🔍 Matching resume with job Description… please wait
+</div>
+
+
+
+
+    <pre id="output"></pre>
+  </div>
+
+  <script>
+ let storedResumeText = "";
+
+ function logout() {
+    localStorage.removeItem("token");
+    alert("Logged out successfully");
+    window.location.href = "login.html";
+  }
+
+ function downloadPDF() {
+  const text = document.getElementById("output").innerText;
+  if (!text) {
+    alert("No analysis to download");
+    return;
+  }
+
+  const blob = new Blob([text], { type: "text/plain" });
+  const link = document.createElement("a");
+  link.href = URL.createObjectURL(blob);
+  link.download = "resume-analysis.txt";
+  link.click();
+}
+
+    async function uploadResume() {
+      const fileInput = document.getElementById("resumeFile");
+      const output = document.getElementById("output");
+
+      if (!fileInput.files.length) {
+        alert("Please select a TXT or DOCX file");
+        return;
+      }
+
+      const formData = new FormData();
+      formData.append("resume", fileInput.files[0]);
+
+      output.className = "analysis-output loading";
+output.innerText = "🔍 Analyzing your resume\n\nPlease wait a few seconds.\nOur AI is carefully reviewing your skills, strengths, and improvement areas";
+
+
+      try {
+       const token = localStorage.getItem("token");
+       const response = await fetch("http://localhost:5000/upload", {
+       method: "POST",
+        headers: {
+        "Authorization": "Bearer " + token
+        },
+       body: formData,
+     });
+
+        const data = await response.json();
+
+        if (data.analysis) {
+          let formatted = data.analysis
+          .replace(/### (.*)/g, "<h3>$1</h3>")
+          .replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>");
+
+          output.className = "analysis-output";
+       storedResumeText = data.rawText || data.analysis;  
+      output.innerHTML = formatted;
+
+     }
+ 
+ else if (data.error) {
+          output.innerText = "Error: " + data.error;
+        } else {
+          output.innerText = JSON.stringify(data, null, 2);
+        }
+      } catch (err) {
+        output.innerText = "Something went wrong.";
+      }
+    }
+  </script>
+
+ <script>
+ async function matchJD() {
+  const jobDesc = document.getElementById("jobDesc").value;
+  const token = localStorage.getItem("token");
+  const jdOutput = document.getElementById("jdOutput");
+  const jdLoading = document.getElementById("jdLoading");
+
+  if (!token) {
+    alert("Login required");
+    window.location.href = "login.html";
+    return;
+  }
+
+  if (!storedResumeText) {
+    alert("Please analyze resume first");
+    return;
+  }
+
+  if (!jobDesc) {
+    alert("Please paste job description");
+    return;
+  }
+
+  jdOutput.innerText = "";
+  jdLoading.style.display = "block";
+  jdLoading.className = "loading-dots";
+
+  try {
+    const res = await fetch("http://localhost:5000/match", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": "Bearer " + token
+      },
+      body: JSON.stringify({
+        jobDescription: jobDesc,
+        resumeText: storedResumeText
+      })
+    });
+
+    const data = await res.json();
+
+    jdLoading.style.display = "none";
+
+    if (!res.ok) {
+      jdOutput.innerText = data.error || "Match failed";
+      return;
+    }
+
+    jdOutput.innerHTML = data.matchResult.replace(/\n/g, "<br>");
+
+  } catch (err) {
+    jdLoading.style.display = "none";
+    alert("Server not reachable");
+  }
+}
+
+</script>
+
+<script>
+window.matchJD = matchJD;
+</script>
+
+
+
+
+</body>
+</html>
+
