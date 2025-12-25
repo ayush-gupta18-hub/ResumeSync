@@ -33,22 +33,10 @@ mongoose
     console.error("MongoDB connection error:", err.message);
   });
 
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    cb(null, "uploads/");
-  },
-  filename: (req, file, cb) => {
-    cb(null, Date.now() + path.extname(file.originalname));
-  },
-});
-
-
 const upload = multer({
   storage: multer.diskStorage({
-    destination: "/tmp",   
-    filename: (_, file, cb) => {
-      cb(null, Date.now() + "-" + file.originalname);
-    }
+    destination: "/tmp",
+    filename: (_, file, cb) => cb(null, Date.now() + "-" + file.originalname)
   })
 });
 
