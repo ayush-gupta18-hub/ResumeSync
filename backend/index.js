@@ -42,7 +42,16 @@ const storage = multer.diskStorage({
   },
 });
 
-const upload = multer({ storage });
+
+const upload = multer({
+  storage: multer.diskStorage({
+    destination: "/tmp",   
+    filename: (_, file, cb) => {
+      cb(null, Date.now() + "-" + file.originalname);
+    }
+  })
+});
+
 
 
 // Health check
@@ -334,9 +343,10 @@ ${jobDescription}
 
 
 
-app.listen(5000, () => {
-  console.log("🚀 ResumeSync Backend Running on http://localhost:5000");
-});
+const PORT = process.env.PORT || 5000;
 
+app.listen(PORT, () => {
+  console.log(`🚀 ResumeSync Backend Running on port ${PORT}`);
+});
 
 
